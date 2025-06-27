@@ -1,68 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-   <script>
-
-const apiKey = "fe9e86cd2f134b31bdec0c54e20865fe";
-const apiUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric&q=";
-
-const searchBox = document.querySelector(".search input");
-const searchBtn = document.querySelector(".search button");
-const weatherIcon = document.querySelector(".weather-icon");
-
-async function checkWeather(city){
-    const response = await fetch(apiUrl + city + `&appid=${apiKey}`);
-
-    if(response.status == 404){
-        document.querySelector(".error").style.display = "block";
-        document.querySelector(".weather").style.display = "none";
-    }else{
-        var data = await response.json();
-
-
-document.querySelector(".city").innerHTML = data.name;
-document.querySelector(".temp").innerHTML = Math.round(data.main.temp) + "°c";
-document.querySelector(".humidity").innerHTML = data.main.humidity + "%";
-document.querySelector(".wind").innerHTML = data.wind.speed + " kmph";
-
-if(data.weather[0].main == "Clouds"){
-    weatherIcon.src = "clouds.png";
-}
-else if(data.weather[0].main == "Clear"){
-    weatherIcon.src = "clear.png";
-}
-else if(data.weather[0].main == "Rain"){
-    weatherIcon.src = "rain.png";
-}
-else if(data.weather[0].main == "Drizzle"){
-    weatherIcon.src = "drizzle.png";
-}
-else if(data.weather[0].main == "Mist"){
-    weatherIcon.src = "mist.png";
-}
-else if(data.weather[0].main == "Snow"){
-    weatherIcon.src = "snow.png";
-}
-
-document.querySelector(".weather").style.display = "block";
-document.querySelector(".error").style.display = "none"; 
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weer + Kledingadvies</title>
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-   
+    body {
+      font-family: sans-serif;
+      background: #eef2f3;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-}
+    .container {
+      text-align: center;
+      background: #ffffffdd;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 480px;
+    }
 
+    input, button {
+      padding: 12px;
+      font-size: 16px;
+      margin: 8px 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
 
-searchBtn.addEventListener("click", ()=>{
-    checkWeather(searchBox.value);
-})
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
 
+    button:hover {
+      background-color: #0056b3;
+    }
 
-</script> 
+    #resultaat {
+      margin-top: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    img {
+      vertical-align: middle;
+    }
+
+    @media (max-width: 400px) {
+      h1 {
+        font-size: 1.4em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🇳🇱 Weer + Kledingadvies</h1>
+    
+    <input list="steden" id="stad" placeholder="Typ een stad..." />
+    <datalist id="steden">
+      <option value="Amsterdam">
+      <option value="Rotterdam">
+      <option value="Utrecht">
+      <option value="Den Haag">
+      <option value="Groningen">
+      <option value="Maastricht">
+      <option value="Nijmegen">
+      <option value="Zwolle">
+      <option value="Eindhoven">
+      <option value="Leeuwarden">
+      <option value="Almere">
+      <option value="Breda">
+      <option value="Tilburg">
+      <option value="Arnhem">
+      <option value="Apeldoorn">
+      <option value="Haarlem">
+      <option value="Delft">
+      <option value="Enschede">
+      <option value="Leiden">
+      <option value="Amersfoort">
+    </datalist>
+    <button onclick="haalWeer()">Check Weer</button>
+
+    <div id="resultaat"></div>
+  </div>
+
+  <script>
+    const apiKey = 'dbac40673c50cfcdce04adffdaebf003'; 
+
+    function geefKledingAdvies(temp) {
+      if (temp >= 30) return '👕 Korte broek, luchtig shirt en zonnebrand!';
+      if (temp >= 20) return '😎 T-shirt, jeans en misschien een zonnebril.';
+      if (temp >= 10) return '🧥 Vest of een lichte jas is handig.';
+      if (temp >= 0)  return '🧣 Dikke jas, sjaal en eventueel handschoenen.';
+      return '🥶 Alles aantrekken wat je hebt. Het is ijskoud!';
+    }
+
+    async function haalWeer() {
+      const stad = document.getElementById('stad').value.trim();
+      const resultaatDiv = document.getElementById('resultaat');
+
+      if (!stad) {
+        resultaatDiv.innerHTML = '❗ Vul een stad in.';
+        return;
+      }
+
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(stad)},NL&appid=${apiKey}&units=metric&lang=nl`;
+
+      resultaatDiv.innerHTML = '⏳ Even geduld...';
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Stad niet gevonden of API-key klopt niet.');
+
+        const data = await response.json();
+        const icoonUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+        const kledingAdvies = geefKledingAdvies(data.main.temp);
+
+        resultaatDiv.innerHTML = `
+          <h2>${data.name}</h2>
+          <img src="${icoonUrl}" alt="icoon"><br>
+          🌡️ Temperatuur: ${data.main.temp}°C<br>
+          ☁️ ${data.weather[0].description}<br>
+          💨 Wind: ${data.wind.speed} m/s<br><br>
+          👕 <strong>Kledingadvies:</strong> ${kledingAdvies}
+        `;
+      } catch (error) {
+        resultaatDiv.innerHTML = '❌ ' + error.message;
+      }
+    }
+  </script>
 </body>
 </html>
